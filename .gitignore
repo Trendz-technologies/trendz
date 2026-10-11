@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+coverage/
+*.log
+.DS_Store
+
+# Environment files must never be committed. Only *.example files are tracked.
+.env
+.env.*
+!.env.example
+
+# Generated
+next-env.d.ts
+# Written by each build (next.config.ts)
+.deployment-id
+*.tsbuildinfo
+# Vercel CLI project link
+.vercel/

@@ -1,0 +1,56 @@
+/** Tamil for customer reviews: the product page section, the review form and the account's Reviews page. */
+export const reviews = {
+  // Stars
+  "{rating} out of 5 stars": "5-இல் {rating} நட்சத்திரங்கள்",
+  "{n} star": "{n} நட்சத்திரம்",
+  "{n} stars": "{n} நட்சத்திரங்கள்",
+  "{n} review": "{n} மதிப்புரை",
+  "{n} reviews": "{n} மதிப்புரைகள்",
+
+  // Product page
+  "Customer reviews": "வாடிக்கையாளர் மதிப்புரைகள்",
+  "What customers say": "வாடிக்கையாளர்கள் சொல்வது",
+  "Based on {n} review": "{n} மதிப்புரையின் அடிப்படையில்",
+  "Based on {n} reviews": "{n} மதிப்புரைகளின் அடிப்படையில்",
+  "No reviews yet. Reviews come from customers who have received this product.": "இன்னும் மதிப்புரைகள் இல்லை. இந்தப் பொருளைப் பெற்ற வாடிக்கையாளர்களே மதிப்புரை எழுதுகிறார்கள்.",
+  "Bought this?": "இதை வாங்கினீர்களா?",
+  "Sign in to write a review": "மதிப்புரை எழுத உள்நுழையுங்கள்",
+  "You can review this product once your order for it has been delivered.": "இந்தப் பொருளுக்கான உங்கள் ஆர்டர் டெலிவரி ஆனதும் மதிப்புரை எழுதலாம்.",
+  "Highest rated": "அதிக மதிப்பீடு முதலில்",
+  "Lowest rated": "குறைந்த மதிப்பீடு முதலில்",
+  "Verified purchase": "உறுதிசெய்யப்பட்ட வாங்குதல்",
+  "Be the first to tell others how it fits and feels.": "இது எப்படிப் பொருந்துகிறது, எப்படி இருக்கிறது என்று முதலில் சொல்பவராக இருங்கள்.",
+  "Show more reviews": "மேலும் மதிப்புரைகளைக் காட்டு",
+
+  // The form
+  "Write a review": "மதிப்புரை எழுதுங்கள்",
+  "Edit review": "மதிப்புரையைத் திருத்து",
+  "Edit your review": "உங்கள் மதிப்புரையைத் திருத்துங்கள்",
+  "Your rating": "உங்கள் மதிப்பீடு",
+  "Choose a star rating": "நட்சத்திர மதிப்பீட்டைத் தேர்ந்தெடுங்கள்",
+  "Headline (optional)": "தலைப்பு (விருப்பம்)",
+  "Sum it up in a few words": "சில சொற்களில் சுருக்கமாகச் சொல்லுங்கள்",
+  "Your review (optional)": "உங்கள் மதிப்புரை (விருப்பம்)",
+  "How is the fit, the fabric, the colour?": "அளவு, துணி, நிறம் எப்படி இருக்கிறது?",
+  "Your first name and the initial of your last name are shown with the review.": "மதிப்புரையுடன் உங்கள் முதல் பெயரும் கடைசிப் பெயரின் முதல் எழுத்தும் காட்டப்படும்.",
+  "Submit review": "மதிப்புரையைச் சமர்ப்பி",
+  "Save review": "மதிப்புரையைச் சேமி",
+  "Remove review": "மதிப்புரையை நீக்கு",
+  "Thank you! Your review is now on the product page.": "நன்றி! உங்கள் மதிப்புரை இப்போது பொருள் பக்கத்தில் உள்ளது.",
+  "Thank you! Your review will appear once it has been approved.": "நன்றி! உங்கள் மதிப்புரை அங்கீகரிக்கப்பட்டதும் தோன்றும்.",
+  "Your review was removed": "உங்கள் மதிப்புரை நீக்கப்பட்டது",
+  "Waiting for approval": "அங்கீகாரத்திற்காகக் காத்திருக்கிறது",
+  "Not published. You can edit it and send it again.": "வெளியிடப்படவில்லை. திருத்தி மீண்டும் அனுப்பலாம்.",
+
+  // Account
+  Reviews: "மதிப்புரைகள்",
+  "Rate your purchases": "நீங்கள் வாங்கியவற்றை மதிப்பிடுங்கள்",
+  "Rate what you have received. Your reviews help other shoppers choose.": "நீங்கள் பெற்ற பொருட்களை மதிப்பிடுங்கள். உங்கள் மதிப்புரைகள் மற்ற வாடிக்கையாளர்கள் தேர்வு செய்ய உதவும்.",
+  "Reviews are closed at the moment": "தற்போது மதிப்புரைகள் ஏற்கப்படவில்லை",
+  "Nothing to review yet": "மதிப்பிட இன்னும் எதுவும் இல்லை",
+  "Once an order is delivered, its products appear here for you to rate.": "ஆர்டர் டெலிவரி ஆனதும், அதன் பொருட்கள் மதிப்பிட இங்கே தோன்றும்.",
+  "Delivered items": "டெலிவரி ஆன பொருட்கள்",
+  "Waiting for your review": "உங்கள் மதிப்புரைக்காகக் காத்திருக்கின்றன",
+  "Delivered {date}": "{date} அன்று டெலிவரி ஆனது",
+  "Your reviews": "உங்கள் மதிப்புரைகள்",
+};

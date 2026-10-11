@@ -1,0 +1,48 @@
+{
+  "name": "trendz-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Trendz web app: storefront, customer account, admin and POS (Next.js)",
+  "engines": {
+    "node": ">=20.11 <25"
+  },
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "build:webpack": "next build --webpack",
+    "start": "next start --port 3100",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "i18n:check": "node --no-warnings scripts/i18n-check.mjs",
+    "phone:metadata": "node scripts/phone-metadata.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@tanstack/react-query": "^5.104.1",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.53.0",
+    "motion": "^12.43.0",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-hook-form": "^7.89.0",
+    "react-phone-number-input": "^3.4.18",
+    "react-quill-new": "^3.8.3",
+    "react-select": "^5.10.2",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
+  }
+}

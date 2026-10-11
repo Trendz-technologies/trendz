@@ -1,0 +1,461 @@
+@import "tailwindcss";
+
+/* `ta:` styles an element only while the storefront is shown in Tamil (e.g. `ta:text-5xl`). */
+@custom-variant ta (&:lang(ta));
+
+/*
+ * Trendz Women's Wear — theme tokens.
+ *
+ * Colours are not fixed here. The admin's Appearance screen saves a mode
+ * (light / dark) and one brand colour; lib/theme.ts turns those into the
+ * custom properties below and the root layout sets them inline on <html>.
+ * The values in this file are the defaults (the Trendz look: black, brand
+ * pink and gold), used when the API cannot be reached.
+ *
+ * Token names keep one meaning in both modes:
+ *   ink       = primary text                offwhite = page background
+ *   white     = raised surfaces (cards)     black    = hairlines / overlays
+ * so in dark mode `white` is a dark surface and `black` is a light hairline.
+ * `night` and `pearl` never change: use them where true black / true white is
+ * required (backdrops, text over photos). Blocks that are dark in both modes
+ * (footer, feature bands, text over photographs) take the `on-dark` class.
+ */
+@theme {
+  --color-ink: #f8efe9;
+  --color-offwhite: #0a0608;
+  --color-white: #181018;
+  --color-black: #ffffff;
+  --color-night: #060305;
+  --color-pearl: #ffffff;
+
+  /* Tinted surfaces. */
+  --color-sand: #3c1029;
+  --color-mist: #1f151d;
+
+  /* Brand colour (ribbons, buttons, badges) and the shades generated from it. */
+  --color-accent: #ff3d9a;
+  --color-accent-bright: #ff7ab8;
+  --color-accent-deep: #c2186b;
+  --color-accent-soft: #3a0f27;
+  /* Text on top of the brand colour (white, or near-black for light brand colours). */
+  --color-on-accent: #ffffff;
+
+  /* Brand gold (logo, headings, hairlines). */
+  --color-gold: #e2b65f;
+  --color-gold-bright: #f7dc93;
+  --color-gold-deep: #b98a2f;
+  --color-gold-hi: #fff6d6;
+
+  --color-success: #3fcf8e;
+  --color-warning: #f3b84b;
+  --color-danger: #ff6b6b;
+  --color-info: #5db8ff;
+
+  /* The Tamil fonts come after the Latin ones: Latin text is unchanged and Tamil glyphs fall through to them. */
+  --font-sans: var(--font-inter), var(--font-tamil), Inter, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: var(--font-playfair), var(--font-tamil-serif), Georgia, serif;
+  --font-display: var(--font-cinzel), var(--font-playfair), var(--font-tamil-serif), Georgia, serif;
+  --font-script: var(--font-greatvibes), var(--font-tamil-serif), "Brush Script MT", cursive;
+
+  /* Shadow shapes are fixed; their colours come from the theme (see :root below). */
+  --shadow-neu: 0 0 0 1px var(--neu-ring), 0 14px 34px -12px var(--neu-drop);
+  --shadow-neu-lg: 0 0 0 1px var(--neu-ring-lg), 0 30px 60px -18px var(--neu-drop-lg), 0 0 44px -18px var(--neu-glow);
+  --shadow-neu-inset: inset 0 1px 2px var(--neu-inset);
+
+  --radius-4xl: 32px;
+
+  --animate-rise: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 0.6s ease-out both;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-marquee-fast: marquee 22s linear infinite;
+  --animate-spin-slow: spin 18s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 1.8s ease-in-out infinite;
+  --animate-word-rise: word-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-page-in: page-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-shine: shine 5s linear infinite;
+  --animate-pop: pop 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Dropdown menus opening. */
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes word-rise {
+    from {
+      transform: translateY(110%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  /* Slow sheen across gold lettering. */
+  @keyframes shine {
+    from {
+      background-position: 200% 50%;
+    }
+    to {
+      background-position: -200% 50%;
+    }
+  }
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 50%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 0%, transparent);
+    }
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(28px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/* Theme values that are not Tailwind tokens (defaults: dark mode, brand pink). */
+:root {
+  /* Page, card and text colours under their own names, for rules that re-map the tokens above. */
+  --theme-page: #0a0608;
+  --theme-card: #181018;
+  --theme-text: #f8efe9;
+
+  --neu-ring: rgb(255 255 255 / 0.05);
+  --neu-drop: rgb(0 0 0 / 0.75);
+  --neu-ring-lg: rgb(255 255 255 / 0.07);
+  --neu-drop-lg: rgb(0 0 0 / 0.85);
+  --neu-glow: rgb(255 61 154 / 0.28);
+  --neu-inset: rgb(0 0 0 / 0.5);
+
+  --frame-ring: rgb(0 0 0 / 0.6);
+  --frame-drop: rgb(0 0 0 / 0.9);
+
+  --glow-accent: rgb(255 61 154 / 0.13);
+  --glow-deep: rgb(194 24 107 / 0.12);
+  --glow-gold: rgb(226 182 95 / 0.08);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  /* Native controls (selects, date pickers, scrollbars) follow the theme mode. */
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+body {
+  color: var(--color-ink);
+  background-color: var(--color-offwhite);
+  /* Soft brand and gold glows behind every page, like stage lighting. */
+  background-image:
+    radial-gradient(60rem 36rem at 8% -8%, var(--glow-accent), transparent 60%),
+    radial-gradient(46rem 30rem at 104% 4%, var(--glow-gold), transparent 60%),
+    radial-gradient(50rem 40rem at 50% 118%, var(--glow-deep), transparent 60%);
+  background-attachment: fixed;
+}
+
+img {
+  -webkit-user-drag: none;
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Blocks that stay dark in both modes (footer, feature bands, text laid over
+ * photographs). Inside them "dark fill + white text" utilities (bg-ink,
+ * text-white, border-white/10 …) mean exactly that, and gold and status
+ * colours use their bright-on-dark values.
+ */
+.on-dark {
+  color-scheme: dark;
+  --color-ink: #0d070b;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-offwhite: #f8efe9;
+  --theme-page: var(--color-night);
+  --theme-card: #17121a;
+  --theme-text: #f8efe9;
+
+  --color-sand: color-mix(in srgb, var(--color-accent) 24%, var(--color-night));
+  --color-mist: color-mix(in srgb, var(--color-accent) 6%, #17121a);
+  --color-accent-soft: color-mix(in srgb, var(--color-accent) 22%, var(--color-night));
+
+  --color-gold: #e2b65f;
+  --color-gold-bright: #f7dc93;
+  --color-gold-deep: #b98a2f;
+  --color-gold-hi: #fff6d6;
+  --color-success: #3fcf8e;
+  --color-warning: #f3b84b;
+  --color-danger: #ff6b6b;
+  --color-info: #5db8ff;
+
+  --neu-ring: rgb(255 255 255 / 0.05);
+  --neu-drop: rgb(0 0 0 / 0.75);
+  --neu-ring-lg: rgb(255 255 255 / 0.07);
+  --neu-drop-lg: rgb(0 0 0 / 0.85);
+  --neu-inset: rgb(0 0 0 / 0.5);
+  --frame-ring: rgb(0 0 0 / 0.6);
+  --frame-drop: rgb(0 0 0 / 0.9);
+  color: #fff;
+}
+
+/* Anything filled with the brand colour: white / pearl text becomes the readable on-brand colour. */
+.ribbon,
+[class~="bg-accent"] {
+  --color-white: var(--color-on-accent);
+  --color-pearl: var(--color-on-accent);
+}
+
+/* Primary actions are brand-colour ribbons everywhere: any link or button filled with `bg-ink`. */
+:is(a, button)[class~="bg-ink"] {
+  --color-white: var(--color-on-accent);
+  --color-black: #000000;
+  color: var(--color-on-accent);
+  background-color: var(--color-accent);
+  background-image: linear-gradient(135deg, var(--color-accent-bright) 0%, var(--color-accent) 42%, var(--color-accent-deep) 100%);
+  box-shadow: 0 10px 28px -12px color-mix(in srgb, var(--color-accent) 65%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.28);
+  transition: filter 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo);
+}
+/* `data-state="hover"` shows the hover look without a pointer (the Appearance preview). */
+:is(a, button)[class~="bg-ink"]:hover:not(:disabled),
+:is(a, button)[class~="bg-ink"][data-state="hover"] {
+  filter: brightness(1.1) saturate(1.05);
+  box-shadow: 0 14px 34px -12px color-mix(in srgb, var(--color-accent) 80%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.32);
+}
+:is(a, button)[class~="bg-ink"]:disabled {
+  background-image: none;
+  box-shadow: none;
+  background-color: color-mix(in srgb, var(--color-accent) 26%, var(--theme-card));
+  color: color-mix(in srgb, var(--theme-text) 45%, transparent);
+}
+
+/* Storefront: editorial serif headings in brand gold. */
+.store-theme :is(h1, h2) {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  color: var(--color-gold-bright);
+}
+
+/*
+ * Tamil (storefront language switch). The script has no capitals and its
+ * letters are wider and taller than Latin ones, so the Latin letter-spacing is
+ * dropped and headings get more line height. Latin-only pieces that should
+ * keep their look (the TRENDZ wordmark) are marked lang="en".
+ */
+:lang(ta):not(input) {
+  letter-spacing: normal;
+}
+:lang(ta):is(h1, h2, h3) {
+  line-height: 1.3;
+}
+.eyebrow:lang(ta) {
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-neu;
+    border: 1px solid color-mix(in oklab, var(--color-gold) 14%, transparent);
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold tracking-wide text-ink/70;
+  }
+  .input {
+    @apply w-full rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-accent/60 focus:ring-4 focus:ring-accent/15 disabled:bg-black/[0.03] disabled:text-ink/50;
+  }
+  /* The box of a <Select>. Callers resize or reshape it with utilities (w-40, h-8, rounded-full, text-xs). */
+  .select-box {
+    @apply relative h-[2.625rem] w-full rounded-xl text-sm;
+  }
+  .link {
+    @apply font-medium text-ink underline decoration-accent/50 underline-offset-4 hover:decoration-accent;
+  }
+  /* Loading placeholder with a moving sheen. */
+  .skeleton {
+    @apply animate-shimmer rounded-2xl;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-text) 6%, transparent) 25%, color-mix(in srgb, var(--theme-text) 12%, transparent) 37%, color-mix(in srgb, var(--theme-text) 6%, transparent) 63%);
+    background-size: 400% 100%;
+  }
+  /* Underline that draws in from the left on hover / focus. */
+  .link-draw {
+    @apply relative;
+    background: linear-gradient(var(--color-accent), var(--color-accent)) 0 100% / 0 1px no-repeat;
+    transition: background-size 0.35s var(--ease-out-expo);
+  }
+  .link-draw:hover,
+  .link-draw:focus-visible {
+    background-size: 100% 1px;
+  }
+  /* Small gold label above section titles. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.26em] text-gold/85;
+    font-family: var(--font-display);
+  }
+  /* Metallic gold lettering with a slow sheen (wordmarks, big numbers). */
+  .text-gold-shine {
+    background: linear-gradient(100deg, var(--color-gold-deep) 0%, var(--color-gold) 22%, var(--color-gold-bright) 42%, var(--color-gold-hi) 50%, var(--color-gold-bright) 58%, var(--color-gold) 78%, var(--color-gold-deep) 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    @apply animate-shine;
+  }
+  /* Satin band in the brand colour, like the ribbons on the shop's flyers. */
+  .ribbon {
+    color: var(--color-on-accent);
+    background: linear-gradient(90deg, var(--color-accent-deep), var(--color-accent) 30%, var(--color-accent-bright) 50%, var(--color-accent) 70%, var(--color-accent-deep));
+    box-shadow: 0 18px 50px -24px color-mix(in srgb, var(--color-accent) 70%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 -1px 0 rgb(0 0 0 / 0.25);
+  }
+  /* Thin gold frame for feature blocks and photographs. */
+  .gold-frame {
+    border: 1px solid color-mix(in oklab, var(--color-gold) 45%, transparent);
+    box-shadow: 0 0 0 1px var(--frame-ring), 0 0 0 5px color-mix(in oklab, var(--color-gold) 9%, transparent), 0 30px 70px -30px var(--frame-drop);
+  }
+  /* Ornamental divider:  ——— ❖ ———  */
+  .ornament {
+    @apply flex items-center justify-center gap-3 text-gold/80;
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    height: 1px;
+    width: 4.5rem;
+    background: linear-gradient(90deg, transparent, var(--color-gold));
+  }
+  .ornament::after {
+    transform: scaleX(-1);
+  }
+  /* Hide scrollbars on horizontal carousels (still scrollable by touch, wheel and keys). */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Scrollbars: a thin bar (4px wide, or 4px high for sideways scrolling) in the
+ * brand colour, so it follows Admin → Appearance and light / dark mode like the
+ * rest of the theme. Everywhere: storefront, admin and POS. In the base layer,
+ * so a carousel that hides its scrollbar (.no-scrollbar, in components) still does.
+ */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-accent) 75%, transparent);
+  }
+  /*
+   * Rounded ends. A bar 4px across has room for a 2px curve at most, which a
+   * screen draws as one faint pixel, so the curve runs 6px along the bar, where
+   * it can be seen. The bar never gets shorter than 40px, to leave room for both ends.
+   */
+  ::-webkit-scrollbar-thumb:vertical {
+    min-height: 40px;
+    border-radius: 2px / 6px;
+  }
+  ::-webkit-scrollbar-thumb:horizontal {
+    min-width: 40px;
+    border-radius: 6px / 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover,
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--color-accent);
+  }
+  /* Firefox cannot size a scrollbar in pixels: its own thin one, in the same colour. */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--color-accent) 75%, transparent) transparent;
+    }
+  }
+}

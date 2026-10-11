@@ -1,0 +1,53 @@
+/* Typography for rich text typed in the admin (see rich-text.tsx). Colours come from the theme tokens. */
+.rich-text > * + * {
+  margin-top: 0.75em;
+}
+.rich-text ul,
+.rich-text ol {
+  padding-left: 1.4em;
+}
+.rich-text ul {
+  list-style: disc;
+}
+.rich-text ol {
+  list-style: decimal;
+}
+.rich-text li + li {
+  margin-top: 0.3em;
+}
+.rich-text li > ul,
+.rich-text li > ol {
+  margin-top: 0.3em;
+}
+.rich-text h3,
+.rich-text h4 {
+  color: var(--color-ink);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.rich-text h3 {
+  font-size: 1.15em;
+}
+.rich-text * + h3,
+.rich-text * + h4 {
+  margin-top: 1.4em;
+}
+.rich-text strong,
+.rich-text b {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.rich-text a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  text-underline-offset: 3px;
+}
+.rich-text a:hover {
+  text-decoration-color: var(--color-accent);
+}
+.rich-text blockquote {
+  border-left: 2px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  padding-left: 1em;
+  font-style: italic;
+}
