@@ -15,12 +15,14 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     // The shopper's language (English or Tamil) comes from a cookie, so the page is already translated when it arrives.
     getI18n(),
   ]);
+  // False while no payment gateway is connected; the API then takes no online orders.
+  const onlinePayments = config?.payments.provider !== "none";
   // Announcement ticker, built from live store settings (nothing hard-coded about money).
   const announcements = [
     config?.shipping.freeShippingThreshold ? t("Free shipping on orders above {amount}", { amount: money(config.shipping.freeShippingThreshold) }) : t("Tracked delivery across India"),
     t("{days}-day easy returns", { days: config?.returns.windowDays ?? 7 }),
     t("New drops every week"),
-    t("Secure UPI, card & netbanking checkout"),
+    ...(onlinePayments ? [t("Secure UPI, card & netbanking checkout")] : []),
   ];
   // The About us page can be switched off in Admin → CMS; the links to it go with it.
   const about = config?.aboutPublished ?? false;
@@ -37,7 +39,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <DoodleField />
         {children}
       </main>
-      <Footer categories={categories} contact={contactDetails(config)} pages={config?.pages ?? []} about={about} logo={logo} />
+      <Footer categories={categories} contact={contactDetails(config)} pages={config?.pages ?? []} about={about} logo={logo} onlinePayments={onlinePayments} />
     </StoreProviders>
   );
 }

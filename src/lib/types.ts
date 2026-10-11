@@ -212,7 +212,8 @@ export interface StoreConfig {
   shipping: { mode: string; flatRate: number; freeShippingThreshold: number | null };
   returns: { windowDays: number };
   checkout: { allowGuestCheckout: boolean; maxQuantityPerLine: number };
-  payments: { provider: "razorpay" | "mock"; razorpayKeyId: string | null };
+  /** "none" while no payment gateway is connected: the shop then takes no online orders. */
+  payments: { provider: "razorpay" | "mock" | "none"; razorpayKeyId: string | null };
   /** Theme saved in Admin → Appearance. */
   appearance: Appearance;
   /** Null while the block is switched off. */

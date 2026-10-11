@@ -123,6 +123,10 @@ Every phone field in the storefront, admin and billing screen is the same compon
 - **Size.** Only India's numbering rules are shipped, in `src/lib/phone-metadata.in.json` (5 KB instead of the library's 80–150 KB for every country). After upgrading the package, run `npm run phone:metadata` to write that file again.
 - Pages that only print a number (footer, contact, about) space it with `displayPhone` in `src/lib/cms.ts`.
 
+### Checkout while no payment gateway is connected
+
+A shop without a Razorpay account yet runs its API with `PAYMENT_PROVIDER=none`, and `/store/config` then says `payments.provider: "none"`. The storefront keeps the catalogue, the bag and the totals. On the checkout page the payment step is replaced by "Online payment is not available yet, so orders cannot be placed on the website for now." with the shop's WhatsApp link, and the Place order button is off. The footer's Razorpay line and the announcement about secure checkout are left out. The API refuses the order as well, so the page is not the protection. Nothing changes here when the gateway is connected later: the page follows the API.
+
 ### Pictures
 
 Pictures are uploaded by the browser straight to image storage (Cloudinary, or Cloudflare R2 / MinIO), with a ticket the API signs. Every picture may be at most 2 MB, in JPEG, PNG, WebP or AVIF; the admin says so beside each upload control and refuses a larger file before sending anything (`src/lib/upload.ts`; the API enforces the same limit). `NEXT_PUBLIC_MEDIA_ORIGIN` must list the storage's addresses: `https://res.cloudinary.com https://api.cloudinary.com` for Cloudinary.

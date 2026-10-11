@@ -61,6 +61,9 @@ export const checkout = {
     "ஆர்டர் {number} உங்களுக்காக {time} வரை ஒதுக்கி வைக்கப்பட்டுள்ளது. அதை உறுதிசெய்ய பணம் செலுத்துங்கள்.",
   "Order {number} is reserved for you. Complete the payment to confirm it.": "ஆர்டர் {number} உங்களுக்காக ஒதுக்கி வைக்கப்பட்டுள்ளது. அதை உறுதிசெய்ய பணம் செலுத்துங்கள்.",
   "Pay securely with UPI, cards, netbanking or wallets after placing the order.": "ஆர்டர் செய்த பிறகு UPI, கார்டு, நெட்பேங்கிங் அல்லது வாலட் மூலம் பாதுகாப்பாகப் பணம் செலுத்துங்கள்.",
+  "Online ordering opens soon.": "ஆன்லைன் ஆர்டர் விரைவில் தொடங்கும்.",
+  "Online payment is not available yet, so orders cannot be placed on the website for now.":
+    "ஆன்லைனில் பணம் செலுத்தும் வசதி இன்னும் தொடங்கவில்லை; எனவே தற்போது இணையதளத்தில் ஆர்டர் செய்ய இயலாது.",
   "Accepted payment methods": "ஏற்கப்படும் பணம் செலுத்தும் முறைகள்",
   Cards: "கார்டுகள்",
   Netbanking: "நெட்பேங்கிங்",

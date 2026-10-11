@@ -16,9 +16,10 @@ import { Textarea } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { api, ApiError, errorMessage, newIdempotencyKey } from "@/lib/api";
 import { CART_KEY, useCart } from "@/lib/cart";
+import { whatsappHref } from "@/lib/cms";
 import { money, time } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/client";
-import type { Address, Order, PricedLine, QuoteTotals } from "@/lib/types";
+import type { Address, Order, PricedLine, QuoteTotals, StoreConfig } from "@/lib/types";
 
 type Quote = QuoteTotals & { lines: PricedLine[]; issues: string[]; canPlaceOrder: boolean };
 
@@ -48,6 +49,10 @@ function Checkout() {
   // One key per order attempt: retries/double clicks reuse it, so only one order is created.
   const attemptKey = useRef(newIdempotencyKey());
 
+  // While no payment gateway is connected the shop takes no online orders (the API refuses them too).
+  const { data: config } = useQuery({ queryKey: ["store-config"], queryFn: () => api.get<StoreConfig>("/store/config"), staleTime: 300_000 });
+  const paymentsOff = config?.payments.provider === "none";
+
   const quote = useQuery({
     queryKey: ["checkout-quote", addressId, cart?.coupon?.code, cart?.itemCount, cart?.grandTotal],
     queryFn: () => api.post<Quote>("/checkout/quote", { shippingAddressId: addressId }),
@@ -74,8 +79,8 @@ function Checkout() {
   if (!order && !cart?.itemCount) return <EmptyCheckout />;
 
   const step: 0 | 1 | 2 = order ? 2 : addressId && !adding ? 1 : 0;
-  const placeDisabled = !quote.data?.canPlaceOrder || adding;
-  const placeHint = adding ? t("Save your delivery address to continue.") : quote.isLoading ? t("Calculating your totals…") : quote.data && !quote.data.canPlaceOrder ? t("Resolve the items flagged above to continue.") : null;
+  const placeDisabled = paymentsOff || !quote.data?.canPlaceOrder || adding;
+  const placeHint = paymentsOff ? t("Online ordering opens soon.") : adding ? t("Save your delivery address to continue.") : quote.isLoading ? t("Calculating your totals…") : quote.data && !quote.data.canPlaceOrder ? t("Resolve the items flagged above to continue.") : null;
 
   return (
     <div className="container-x py-10 md:py-14">
@@ -283,6 +288,18 @@ function Checkout() {
                       else if (o.status === "failed") setPaymentError(o.message);
                     }}
                   />
+                </m.div>
+              ) : paymentsOff ? (
+                <m.div key="off" className="flex items-start gap-3 rounded-2xl bg-offwhite p-4 text-sm text-ink/65" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <Clock size={17} className="mt-0.5 shrink-0 text-ink" />
+                  <div>
+                    <p>{t("Online payment is not available yet, so orders cannot be placed on the website for now.")}</p>
+                    {config?.contact?.whatsapp && (
+                      <a href={whatsappHref(config.contact.whatsapp)} target="_blank" rel="noopener noreferrer" className="link mt-2 inline-block font-semibold text-ink">
+                        {t("Message us on WhatsApp")}
+                      </a>
+                    )}
+                  </div>
                 </m.div>
               ) : (
                 <m.div key="info" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

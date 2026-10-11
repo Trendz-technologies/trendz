@@ -9,7 +9,21 @@ import { Doodle } from "./doodle";
 import { Reveal, Stagger, StaggerItem } from "./motion";
 
 /** `contact`, `pages`, `about` (whether the About us page is switched on) and `logo` (the uploaded logo, if any) come from Admin → CMS; a detail left empty there is left out here. */
-export async function Footer({ categories, contact, pages, about, logo }: { categories: CategoryNode[]; contact: ContactDetails; pages: StoreConfig["pages"]; about: boolean; logo: string | null }) {
+export async function Footer({
+  categories,
+  contact,
+  pages,
+  about,
+  logo,
+  onlinePayments,
+}: {
+  categories: CategoryNode[];
+  contact: ContactDetails;
+  pages: StoreConfig["pages"];
+  about: boolean;
+  logo: string | null;
+  onlinePayments: boolean;
+}) {
   const { t, tx, locale } = await getI18n();
   const say = localize(locale);
   const address = lines(say(contact.address));
@@ -144,7 +158,7 @@ export async function Footer({ categories, contact, pages, about, logo }: { cate
               ))}
             </ul>
           )}
-          <p>{t("Secure payments by Razorpay")}</p>
+          {onlinePayments && <p>{t("Secure payments by Razorpay")}</p>}
         </div>
       </div>
     </footer>
