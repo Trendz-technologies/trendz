@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Package, Plus, Star } from "lucide-react";
+import { FileUp, Package, Plus, Star } from "lucide-react";
 import { Can, PageHeader, SearchInput, useListState } from "@/components/admin/page";
 import { Badge, Button, Card, DataTable, EmptyState, ErrorState, Pagination, Select, StatusBadge } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -37,6 +37,9 @@ export default function ProductsPage() {
         description="Everything you sell, with variants, pricing and stock."
         actions={
           <Can permission="products.write">
+            <Button variant="outline" icon={<FileUp size={15} />} onClick={() => router.push("/admin/products/import")}>
+              Import
+            </Button>
             <Button icon={<Plus size={15} />} onClick={() => router.push("/admin/products/new")}>
               New product
             </Button>

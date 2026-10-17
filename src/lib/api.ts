@@ -40,6 +40,8 @@ type Query = Record<string, string | number | boolean | null | undefined>;
 interface RequestOptions {
   query?: Query;
   body?: unknown;
+  /** A file sent as the request body as it is (instead of JSON). */
+  file?: Blob;
   idempotencyKey?: string;
   /** Skip the automatic refresh-and-retry on 401. */
   noRefresh?: boolean;
@@ -97,7 +99,8 @@ export function refreshSession(): Promise<boolean> {
 
 async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<{ data: T; meta?: PageMeta; headers: Headers }> {
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+  if (opts.file) headers["Content-Type"] = opts.file.type || "application/octet-stream";
+  else if (opts.body !== undefined) headers["Content-Type"] = "application/json";
   if (method !== "GET") headers["X-CSRF-Token"] = await csrfToken();
   if (opts.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
 
@@ -105,7 +108,7 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
     method,
     headers,
     credentials: "same-origin",
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    body: opts.file ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
     signal: opts.signal,
   });
 
@@ -135,6 +138,8 @@ export const api = {
   put: async <T>(path: string, body?: unknown) => (await request<T>("PUT", path, { body: body ?? {} })).data,
   patch: async <T>(path: string, body?: unknown) => (await request<T>("PATCH", path, { body: body ?? {} })).data,
   delete: async <T>(path: string) => (await request<T>("DELETE", path)).data,
+  /** POSTs a file as the request body (e.g. an Excel workbook). */
+  upload: async <T>(path: string, file: Blob) => (await request<T>("POST", path, { file })).data,
 };
 
 /** Fetches a binary response (PDF, CSV, XLSX) and opens / downloads it. */

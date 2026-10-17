@@ -68,6 +68,9 @@ const config = (phase: string): NextConfig => ({
   poweredByHeader: false,
   // Product images are already optimised to WebP/AVIF sizes and served by image storage (R2 or Cloudinary) and its CDN.
   images: { unoptimized: true },
+  // How long the /api rewrite below waits for the API (Next's default is 30 s). Importing a product
+  // downloads and optimises all of its pictures in one request, which can take longer on a slow link.
+  experimental: { proxyTimeout: 120_000 },
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_INTERNAL_URL}/api/:path*` }];
   },
