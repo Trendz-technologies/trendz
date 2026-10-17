@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, Checkbox, Field, Input, Select, Textarea } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { api, errorMessage } from "@/lib/api";
+import { uploadProductImage } from "@/lib/upload";
 import { useAuth } from "@/lib/auth";
 import { percent } from "@/lib/format";
 import {
@@ -24,6 +25,8 @@ import {
 import { emptyProductForm, formToPayload, mapProductErrorPath, productFormSchema, productToForm, type ProductFormInput, type ProductFormOutput } from "./catalog-product-schema";
 import { OptionsAndVariants, syncSuggestedSkus } from "./catalog-product-variants";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+
+type AiProductDraft = { name: string; productType: string; shortDescription: string; description: string; seoTitle: string; seoDescription: string; seoKeywords: string; tags: string[]; generatedImageBase64: string; generatedImageMimeType: string; generatedImageBytes: number };
 
 const STATUS_HELP: Record<ProductStatus, string> = {
   DRAFT: "Hidden from the storefront while you work on it.",
@@ -44,6 +47,9 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
   const [initial] = useState(() => (product ? productToForm(product) : { values: emptyProductForm(), exclusions: [], retired: [] }));
   const [exclusions, setExclusions] = useState(initial.exclusions);
   const [retired, setRetired] = useState(initial.retired);
+  const [garmentFile, setGarmentFile] = useState<File | null>(null);
+  const [aiDraft, setAiDraft] = useState<AiProductDraft | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const form = useForm<ProductFormInput, unknown, ProductFormOutput>({ resolver: zodResolver(productFormSchema), defaultValues: initial.values });
   const {
