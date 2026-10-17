@@ -86,7 +86,7 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
             const modelPhoto = new File([imageBlob], "trendz-ai-model.jpg", { type: aiDraft.generatedImageMimeType });
             await uploadProductImage(saved.id, modelPhoto, { altText: aiDraft.name });
             setAiDraft(null);
-          } catch (imageError) {
+          } catch {
             void qc.invalidateQueries({ queryKey: catalogKeys.products });
             toast("Product was saved, but the model photo upload failed. Open the product and retry the image upload.", "error");
             if (!product) router.replace(`/admin/products/${saved.id}`);
