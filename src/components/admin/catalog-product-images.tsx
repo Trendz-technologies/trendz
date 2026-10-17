@@ -14,12 +14,57 @@ import { catalogKeys, MAX_PRODUCT_IMAGES, type AdminProduct } from "./catalog-sh
 
 const ACCEPT = IMAGE_TYPES.join(",");
 
+/** Option name → chosen value ("" or missing = All). */
+type VariantPick = Record<string, string>;
+
+/** The variant a size / colour choice points at: nothing chosen = the whole product, every option chosen = that one variant. */
+function resolvePick(product: AdminProduct, pick: VariantPick): { variantId: string | null; label: string | null; problem: string | null } {
+  const chosen = product.options.filter((o) => pick[o.name]);
+  if (!chosen.length) return { variantId: null, label: null, problem: null };
+  const label = chosen.map((o) => pick[o.name]).join(" / ");
+  const missing = product.options.filter((o) => !pick[o.name]);
+  if (missing.length) {
+    return { variantId: null, label, problem: `Choose a ${missing.map((o) => o.name.toLowerCase()).join(" and ")} as well, or set ${chosen.map((o) => o.name).join(" and ")} back to All` };
+  }
+  const variant = product.variants.find((v) => product.options.every((o) => v.options[o.name] === pick[o.name]));
+  return variant ? { variantId: variant.id, label, problem: null } : { variantId: null, label, problem: `This product has no ${label} variant` };
+}
+
+const pickOf = (product: AdminProduct, variantId: string | null): VariantPick => {
+  const v = variantId ? product.variants.find((x) => x.id === variantId) : undefined;
+  return v ? Object.fromEntries(product.options.map((o) => [o.name, v.options[o.name] ?? ""])) : {};
+};
+
+/** One select per option (Size, Color). Values with no variant next to the other choices are disabled. */
+function VariantPicker({ product, pick, onChange, idPrefix }: { product: AdminProduct; pick: VariantPick; onChange: (next: VariantPick) => void; idPrefix: string }) {
+  const possible = (name: string, value: string) =>
+    product.variants.some((v) => v.options[name] === value && product.options.every((o) => o.name === name || !pick[o.name] || v.options[o.name] === pick[o.name]));
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {product.options.map((o) => (
+        <Field key={o.id} label={o.name} htmlFor={`${idPrefix}-${o.id}`}>
+          <Select id={`${idPrefix}-${o.id}`} value={pick[o.name] ?? ""} onChange={(e) => onChange({ ...pick, [o.name]: e.target.value })}>
+            <option value="">All {o.name.toLowerCase()}s</option>
+            {o.values.map((value) => (
+              <option key={value} value={value} disabled={!possible(o.name, value)}>
+                {value}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      ))}
+    </div>
+  );
+}
+
 /** Product gallery: upload, order, alt text / variant assignment, replace and delete. */
 export function ProductImages({ product }: { product: AdminProduct }) {
   const qc = useQueryClient();
   const toast = useToast();
   const { can } = useAuth();
   const canWrite = can("products.write");
+  const [pick, setPick] = useState<VariantPick>({});
+  const target = resolvePick(product, pick);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [editing, setEditing] = useState<ImageView | null>(null);
@@ -36,6 +81,10 @@ export function ProductImages({ product }: { product: AdminProduct }) {
 
   const upload = async (files: File[]) => {
     if (!files.length) return;
+    if (target.problem) {
+      toast(target.problem, "error");
+      return;
+    }
     const room = MAX_PRODUCT_IMAGES - images.length;
     if (room <= 0) {
       toast(`A product can have at most ${MAX_PRODUCT_IMAGES} images`, "error");
@@ -57,7 +106,7 @@ export function ProductImages({ product }: { product: AdminProduct }) {
     let ok = 0;
     for (const [i, file] of batch.entries()) {
       try {
-        await uploadProductImage(product.id, file);
+        await uploadProductImage(product.id, file, { variantId: target.variantId });
         ok += 1;
       } catch (err) {
         toast(`${file.name}: ${errorMessage(err)}`, "error");
@@ -66,7 +115,7 @@ export function ProductImages({ product }: { product: AdminProduct }) {
     }
     setProgress(null);
     await refresh();
-    if (ok) toast(`${ok} image${ok === 1 ? "" : "s"} uploaded. Optimising…`);
+    if (ok) toast(`${ok} image${ok === 1 ? "" : "s"} uploaded${target.label ? ` for ${target.label}` : ""}. Optimising…`);
   };
 
   const replace = async (image: ImageView, file: File | undefined) => {
@@ -135,7 +184,7 @@ export function ProductImages({ product }: { product: AdminProduct }) {
   const onDrop = (e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setDragging(false);
-    if (!canWrite || progress) return;
+    if (!canWrite || progress || target.problem) return;
     void upload(Array.from(e.dataTransfer.files));
   };
 
@@ -157,6 +206,17 @@ export function ProductImages({ product }: { product: AdminProduct }) {
         </div>
       }
     >
+      {canWrite && product.options.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-black/[0.06] p-4">
+          <p className="text-sm font-semibold">Upload for</p>
+          <p className="mb-3 mt-0.5 text-xs text-ink/50">
+            Choose a {product.options.map((o) => o.name.toLowerCase()).join(" and ")} to show these photos when a shopper picks that variant. Leave {product.options.length > 1 ? "both" : "it"} on All for photos of the whole product.
+          </p>
+          <VariantPicker product={product} pick={pick} onChange={setPick} idPrefix="upload-for" />
+          {target.problem && <p className="mt-2 text-xs text-danger">{target.problem}</p>}
+        </div>
+      )}
+
       {canWrite && (
         <label
           onDragOver={(e) => {
@@ -169,17 +229,20 @@ export function ProductImages({ product }: { product: AdminProduct }) {
             "mb-5 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-8 text-center transition",
             dragging ? "border-ink/40 bg-black/[0.03]" : "border-black/10 hover:border-black/20",
             progress && "pointer-events-none opacity-70",
+            target.problem && "pointer-events-none opacity-50",
           )}
         >
           {progress ? <Loader2 size={22} className="animate-spin text-ink/50" /> : <ImagePlus size={22} className="text-ink/40" />}
-          <span className="text-sm font-semibold">{progress ? `Uploading ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…` : "Drop images here or click to upload"}</span>
+          <span className="text-sm font-semibold">
+            {progress ? `Uploading ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…` : target.variantId ? `Drop images for ${target.label} here or click to upload` : "Drop images here or click to upload"}
+          </span>
           <span className="text-xs text-ink/50">{IMAGE_RULES} each. The first image is the cover. Images are optimised automatically.</span>
           <input
             type="file"
             multiple
             accept={ACCEPT}
             className="sr-only"
-            disabled={!!progress}
+            disabled={!!progress || !!target.problem}
             onChange={(e) => {
               const files = Array.from(e.target.files ?? []);
               e.target.value = "";
@@ -300,9 +363,12 @@ function ImageEditModal({ product, image, onClose }: { product: AdminProduct; im
   const qc = useQueryClient();
   const toast = useToast();
   const [altText, setAltText] = useState(image.altText ?? "");
-  const [variantId, setVariantId] = useState(image.variantId ?? "");
+  // Until the size / colour is changed, the image keeps whatever variant it has (even one no longer in the option matrix).
+  const [pick, setPick] = useState<VariantPick | null>(null);
+  const target = pick ? resolvePick(product, pick) : null;
+  const invalid = altText.length > 200 || !!target?.problem;
   const save = useMutation({
-    mutationFn: () => api.patch(`/products/${product.id}/images/${image.id}`, { altText: altText.trim() || null, variantId: variantId || null }),
+    mutationFn: () => api.patch(`/products/${product.id}/images/${image.id}`, { altText: altText.trim() || null, variantId: target ? target.variantId : image.variantId }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: catalogKeys.product(product.id) });
       toast("Image updated");
@@ -322,7 +388,7 @@ function ImageEditModal({ product, image, onClose }: { product: AdminProduct; im
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button loading={save.isPending} disabled={altText.length > 200} onClick={() => save.mutate()}>
+          <Button loading={save.isPending} disabled={invalid} onClick={() => save.mutate()}>
             Save
           </Button>
         </>
@@ -332,23 +398,22 @@ function ImageEditModal({ product, image, onClose }: { product: AdminProduct; im
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          save.mutate();
+          if (!invalid) save.mutate();
         }}
       >
         {src && <img src={src} alt="" className="mx-auto max-h-56 rounded-xl object-contain" />}
         <Field label="Alt text" htmlFor="img-alt" hint="Describe the image for screen readers and search engines" error={altText.length > 200 ? "At most 200 characters" : undefined}>
           <Input id="img-alt" value={altText} onChange={(e) => setAltText(e.target.value)} invalid={altText.length > 200} />
         </Field>
-        <Field label="Show for variant" htmlFor="img-variant" hint="Shown when the shopper selects this variant">
-          <Select id="img-variant" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
-            <option value="">All variants</option>
-            {product.variants.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.title} · {v.sku}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        {product.options.length > 0 && (
+          <div>
+            <p className="label">Show for</p>
+            <VariantPicker product={product} pick={pick ?? pickOf(product, image.variantId)} onChange={setPick} idPrefix="img-variant" />
+            <p className={clsx("mt-1 text-xs", target?.problem ? "text-danger" : "text-ink/50")}>
+              {target?.problem ?? "Shown when the shopper picks this variant. All means a photo of the whole product."}
+            </p>
+          </div>
+        )}
       </form>
     </Modal>
   );

@@ -185,13 +185,16 @@ export function ProductPurchase({ product, rating }: { product: ProductDetail; r
   const images = product.images.length ? product.images : [null];
 
   const select = (optionName: string, value: string) => {
-    setSelected((s) => ({ ...s, [optionName]: value }));
-    // Picking a colour shows that colour's photo when one is tagged to it.
-    if (isColorOption(optionName)) {
+    const next = { ...selected, [optionName]: value };
+    setSelected(next);
+    // Show the photo tagged to the chosen size and colour; picking a colour otherwise shows any photo of that colour.
+    const exact = product.variants.find((v) => product.options.every((o) => v.options[o.name] === next[o.name]));
+    let i = exact ? product.images.findIndex((img) => img.variantId === exact.id) : -1;
+    if (i < 0 && isColorOption(optionName)) {
       const ids = new Set(product.variants.filter((v) => v.options[optionName] === value).map((v) => v.id));
-      const i = product.images.findIndex((img) => img.variantId && ids.has(img.variantId));
-      if (i >= 0 && i !== gallery.index) setGallery({ index: i, direction: i > gallery.index ? 1 : -1 });
+      i = product.images.findIndex((img) => img.variantId && ids.has(img.variantId));
     }
+    if (i >= 0 && i !== gallery.index) setGallery({ index: i, direction: i > gallery.index ? 1 : -1 });
   };
 
   const addToCart = () => {

@@ -7,12 +7,15 @@ import { Plus, RotateCcw, Trash2, WandSparkles, X } from "lucide-react";
 import { Badge, Button, Card, ConfirmDialog, Input, MoneyInput, Select } from "@/components/ui";
 import { VARIANT_STATUSES, type AdminVariant } from "./catalog-shared";
 import type { ProductFormInput, ProductFormOutput } from "./catalog-product-schema";
-import { activeOptions, buildMatrix, suggestSku, uid, variantLabel, type Exclusion, type OptionDraft, type VariantDraft } from "./catalog-variants";
+import { activeOptions, buildMatrix, OPTION_NAMES, optionValuesHint, suggestSku, uid, variantLabel, type Exclusion, type OptionDraft, type VariantDraft } from "./catalog-variants";
 
 export type ProductFormApi = UseFormReturn<ProductFormInput, unknown, ProductFormOutput>;
 
-const MAX_OPTIONS = 3;
+const MAX_OPTIONS = OPTION_NAMES.length;
 const MAX_VALUES = 50;
+
+/** The names an option row can pick: the fixed list, plus its own name if an older product saved another one. */
+const nameChoices = (current: string | undefined): string[] => (current && !(OPTION_NAMES as readonly string[]).includes(current) ? [...OPTION_NAMES, current] : [...OPTION_NAMES]);
 
 /** Re-suggests the SKU of every unsaved row whose SKU was not typed by hand (e.g. after the base SKU changed). */
 export function syncSuggestedSkus(form: ProductFormApi, baseSku: string) {
@@ -156,7 +159,7 @@ export function OptionsAndVariants({
         title={
           <div>
             <h2 className="text-sm font-semibold">Options & variants</h2>
-            <p className="mt-0.5 text-xs text-ink/50">Add up to 3 options (e.g. Size, Colour). Every combination becomes a variant with its own SKU, price and stock.</p>
+            <p className="mt-0.5 text-xs text-ink/50">Add Size, Color or both. Every combination becomes a variant with its own SKU, price and stock.</p>
           </div>
         }
         actions={
@@ -168,7 +171,7 @@ export function OptionsAndVariants({
         }
       >
         {optionFields.fields.length === 0 ? (
-          <p className="text-sm text-ink/55">This product has a single variant. Add an option to sell it in several sizes, colours or materials.</p>
+          <p className="text-sm text-ink/55">This product has a single variant. Add an option to sell it in several sizes or colours.</p>
         ) : (
           <div className="space-y-4">
             {optionFields.fields.map((field, i) => {
@@ -180,7 +183,15 @@ export function OptionsAndVariants({
                     <label htmlFor={`option-${i}-name`} className="label">
                       Option {i + 1}
                     </label>
-                    <Input id={`option-${i}-name`} placeholder="e.g. Size" invalid={!!err?.name} {...register(`options.${i}.name`)} />
+                    <Select id={`option-${i}-name`} invalid={!!err?.name} {...register(`options.${i}.name`)}>
+                      <option value="">Select option…</option>
+                      {/* A name another option already uses cannot be picked twice. */}
+                      {nameChoices(options[i]?.name).map((name) => (
+                        <option key={name} value={name} disabled={options.some((o, j) => j !== i && o.name === name)}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
                     {err?.name?.message && <p className="mt-1 text-xs text-danger">{err.name.message}</p>}
                   </div>
                   <div className="min-w-0">
@@ -189,6 +200,7 @@ export function OptionsAndVariants({
                     </span>
                     <OptionValuesInput
                       labelledBy={`option-${i}-values-label`}
+                      placeholder={optionValuesHint(options[i]?.name ?? "")}
                       values={values}
                       invalid={!!err?.values}
                       onAdd={(raw) => addValues(i, raw)}
@@ -376,6 +388,7 @@ function OptionValuesInput({
   values,
   invalid,
   labelledBy,
+  placeholder,
   onAdd,
   onRemove,
   onRename,
@@ -383,6 +396,7 @@ function OptionValuesInput({
   values: string[];
   invalid?: boolean;
   labelledBy: string;
+  placeholder: string;
   onAdd: (raw: string) => string | null;
   onRemove: (value: string) => void;
   onRename: (from: string, to: string) => string | null;
@@ -451,7 +465,7 @@ function OptionValuesInput({
         <input
           value={text}
           aria-label="Add value"
-          placeholder={values.length ? "Add value" : "e.g. S, M, L"}
+          placeholder={values.length ? "Add value" : placeholder}
           onChange={(e) => {
             setText(e.target.value);
             setError(null);

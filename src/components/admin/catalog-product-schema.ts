@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { intOrNull, intToString, PRODUCT_STATUSES, VARIANT_STATUSES, type AdminProduct, type AdminVariant } from "./catalog-shared";
-import { emptyVariant, missingCombinations, SKU_PATTERN, uid, type Exclusion, type OptionDraft, type VariantDraft } from "./catalog-variants";
+import { canonicalOptionName, emptyVariant, missingCombinations, SKU_PATTERN, uid, type Exclusion, type OptionDraft, type VariantDraft } from "./catalog-variants";
 import { withinChars } from "@/lib/rich-text";
 
 /** Mirrors src/modules/catalog/products.schemas.ts in trendz-api (the API re-validates everything). */
@@ -20,7 +20,7 @@ export const parseTags = (raw: string) => [...new Set(raw.split(",").map((t) => 
 
 const optionSchema = z.object({
   key: z.string(),
-  name: z.string().trim().min(1, "Name this option").max(30, "At most 30 characters"),
+  name: z.string().trim().min(1, "Choose Size or Color").max(30, "At most 30 characters"),
   values: z.array(z.string()).min(1, "Add at least one value").max(50, "At most 50 values"),
 });
 
@@ -134,12 +134,13 @@ function splitVariants(p: AdminProduct): { live: AdminVariant[]; retired: AdminV
 }
 
 export function productToForm(p: AdminProduct): { values: ProductFormInput; exclusions: Exclusion[]; retired: AdminVariant[] } {
-  const options: OptionDraft[] = p.options.map((o) => ({ key: uid(), name: o.name, values: [...o.values] }));
+  // Older products may spell an option differently ("Colour"); the form shows the fixed name, and saving stores it.
+  const options: OptionDraft[] = p.options.map((o) => ({ key: uid(), name: canonicalOptionName(o.name), values: [...o.values] }));
   const { live, retired } = splitVariants(p);
   const rows: VariantDraft[] = live.map((v) => ({
     variantId: v.id,
     originalSku: v.sku,
-    values: Object.fromEntries(options.map((o) => [o.key, v.options[o.name]!])),
+    values: Object.fromEntries(options.map((o, i) => [o.key, v.options[p.options[i]!.name]!])),
     sku: v.sku,
     skuTouched: true,
     mrp: v.mrp,

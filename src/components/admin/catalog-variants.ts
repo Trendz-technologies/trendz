@@ -41,6 +41,19 @@ export interface VariantDraft {
 /** A removed combination (option key → value) that regeneration must not bring back. */
 export type Exclusion = Record<string, string>;
 
+/** The option names a product can use, chosen from a list rather than typed (the storefront draws Color as swatches). */
+export const OPTION_NAMES = ["Size", "Color"] as const;
+
+/** Maps a saved option name onto its fixed spelling ("colour", "SIZE" → "Color", "Size"); any other name is kept as it is. */
+export function canonicalOptionName(name: string): string {
+  const lower = name.trim().toLowerCase();
+  if (lower === "colour") return "Color";
+  return OPTION_NAMES.find((n) => n.toLowerCase() === lower) ?? name;
+}
+
+/** Example values for the value input of an option. */
+export const optionValuesHint = (name: string) => (canonicalOptionName(name) === "Color" ? "e.g. Red, Black, Navy" : "e.g. S, M, L, XL");
+
 let seq = 0;
 export const uid = () => `o${(++seq).toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
