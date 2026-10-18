@@ -127,7 +127,7 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
 
 
 /** Uploads a raw image to an authenticated API endpoint without JSON encoding it. */
-async function postImage<T>(path: string, file: File): Promise<T> {
+async function postImage<T>(path: string, file: File, alreadyRetried = false): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": file.type,
     "X-CSRF-Token": await csrfToken(),
@@ -138,6 +138,14 @@ async function postImage<T>(path: string, file: File): Promise<T> {
     credentials: "same-origin",
     body: file,
   });
+
+  // Unlike JSON requests, image uploads must also refresh an expired session.
+  // Rebuild the CSRF header after refresh because the server may rotate cookies.
+  if (res.status === 401 && !alreadyRetried) {
+    if (await refreshSession()) return postImage<T>(path, file, true);
+    if (typeof window !== "undefined") window.dispatchEvent(new Event("trendz:session-expired"));
+  }
+
   const json = (await res.json().catch(() => null)) as
     | { success: true; data: T }
     | { success: false; message: string; code: string; errors?: FieldError[] }
