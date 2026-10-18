@@ -26,7 +26,7 @@ import { emptyProductForm, formToPayload, mapProductErrorPath, productFormSchema
 import { OptionsAndVariants, syncSuggestedSkus } from "./catalog-product-variants";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
-type AiProductDraft = { name: string; productType: string; shortDescription: string; description: string; seoTitle: string; seoDescription: string; seoKeywords: string; tags: string[]; generatedImageBase64: string; generatedImageMimeType: string; generatedImageBytes: number };
+type AiProductDraft = { name: string; productType: string; shortDescription: string; description: string; seoTitle: string; seoDescription: string; seoKeywords: string; tags: string[] };
 
 const STATUS_HELP: Record<ProductStatus, string> = {
   DRAFT: "Hidden from the storefront while you work on it.",
@@ -79,20 +79,17 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
       const body = formToPayload(values);
       try {
         const saved = product ? await api.put<AdminProduct>(`/products/${product.id}`, body) : await api.post<AdminProduct>("/products", body);
-        if (aiDraft) {
+        if (aiDraft && garmentFile) {
           try {
-            const imageResponse = await fetch(`data:${aiDraft.generatedImageMimeType};base64,${aiDraft.generatedImageBase64}`);
-            const imageBlob = await imageResponse.blob();
-            const modelPhoto = new File([imageBlob], "trendz-ai-model.jpg", { type: aiDraft.generatedImageMimeType });
-            await uploadProductImage(saved.id, modelPhoto, { altText: aiDraft.name });
+            // SEO is generated from this original garment photo; save that same photo to the product.
+            await uploadProductImage(saved.id, garmentFile, { altText: aiDraft.name });
             setAiDraft(null);
           } catch (uploadError) {
-            // The product already exists at this point. Preserve it, refresh the catalog,
-            // and surface the actual upload failure so storage/auth errors are diagnosable.
+            // The product already exists at this point. Preserve it and surface the upload failure.
             void qc.invalidateQueries({ queryKey: catalogKeys.products });
             void qc.invalidateQueries({ queryKey: catalogKeys.product(saved.id) });
             const reason = errorMessage(uploadError);
-            toast(`Product was saved, but the AI model photo could not be attached: ${reason}. Open the product's Images section and retry.`, "error");
+            toast(`Product was saved, but the original garment photo could not be attached: ${reason}. Open the product's Images section and retry.`, "error");
             if (!product) router.replace(`/admin/products/${saved.id}`);
             return;
           }
@@ -114,7 +111,7 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           void qc.invalidateQueries({ queryKey: catalogKeys.productCodes(saved.id) });
           toast("Product saved");
         } else {
-          toast(aiDraft ? "Product created with the AI model photo. Review stock, pricing and variants before publishing." : "Product created. Add images and codes next.");
+          toast(aiDraft ? "Product created with your garment photo and AI-generated SEO. Review stock, pricing and variants before publishing." : "Product created. Add images and codes next.");
           router.replace(`/admin/products/${saved.id}`);
         }
       } catch (err) {
@@ -144,7 +141,7 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
       form.setValue("seoDescription", draft.seoDescription, { shouldDirty: true });
       form.setValue("seoKeywords", draft.seoKeywords, { shouldDirty: true });
       form.setValue("tags", draft.tags.join(", "), { shouldDirty: true });
-      toast("AI model photo and SEO details are ready. Review the details before saving.");
+      toast("AI SEO details are ready. Review them before saving; your original garment photo will be attached to the product.");
     } catch (err) {
       toast(errorMessage(err), "error");
     } finally {
@@ -157,9 +154,9 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
   return (
     <form onSubmit={onSubmit} noValidate>
       {canWrite && !product && (
-        <Card title="AI model photo & SEO">
+        <Card title="AI SEO from your garment photo">
           <div className="space-y-3">
-            <p className="text-sm text-ink/60">Upload the original garment photo. AI will create a model photo and fill in product and SEO text for you to review.</p>
+            <p className="text-sm text-ink/60">Upload your own garment photo. AI will use it to generate product details and SEO text; your original photo stays the product image.</p>
             <Field label="Garment photo" htmlFor="ai-garment-photo">
               <Input
                 id="ai-garment-photo"
@@ -173,18 +170,12 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
             </Field>
             {garmentFile && <p className="text-xs text-ink/60">{garmentFile.name} · {(garmentFile.size / 1024 / 1024).toFixed(2)} MB</p>}
             <Button type="button" onClick={generateAiDraft} loading={generating} disabled={!garmentFile || generating}>
-              Generate model photo & SEO
+              Generate SEO details
             </Button>
             {aiDraft && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Generated model photo preview</p>
-                <img
-                  src={`data:${aiDraft.generatedImageMimeType};base64,${aiDraft.generatedImageBase64}`}
-                  alt="AI-generated model wearing the uploaded garment"
-                  className="max-h-96 rounded-lg object-contain"
-                />
-                <p className="text-xs text-ink/60">Image size: {(aiDraft.generatedImageBytes / 1024 / 1024).toFixed(2)} MB. Review all generated details before saving.</p>
-              </div>
+              <p className="text-sm text-ink/70">
+                SEO details generated. Your original garment photo will be uploaded as the product image when you save.
+              </p>
             )}
           </div>
         </Card>
