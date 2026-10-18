@@ -125,7 +125,32 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
   return { data: json.data, meta: json.meta, headers: res.headers };
 }
 
+
+/** Uploads a raw image to an authenticated API endpoint without JSON encoding it. */
+async function postImage<T>(path: string, file: File): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": file.type,
+    "X-CSRF-Token": await csrfToken(),
+  };
+  const res = await fetch(`/api${path}`, {
+    method: "POST",
+    headers,
+    credentials: "same-origin",
+    body: file,
+  });
+  const json = (await res.json().catch(() => null)) as
+    | { success: true; data: T }
+    | { success: false; message: string; code: string; errors?: FieldError[] }
+    | null;
+  if (!res.ok || !json || json.success === false) {
+    const err = json && json.success === false ? json : null;
+    throw new ApiError(res.status, err?.code ?? "NETWORK_ERROR", err?.message ?? "Image generation failed. Please try again.", err?.errors ?? []);
+  }
+  return json.data;
+}
+
 export const api = {
+  postImage,
   get: async <T>(path: string, query?: Query, signal?: AbortSignal) => (await request<T>("GET", path, { query, signal })).data,
   page: async <T>(path: string, query?: Query): Promise<Paged<T>> => {
     const r = await request<T>("GET", path, { query });

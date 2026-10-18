@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, Checkbox, Field, Input, Select, Textarea } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { api, errorMessage } from "@/lib/api";
+import { uploadProductImage } from "@/lib/upload";
 import { useAuth } from "@/lib/auth";
 import { percent } from "@/lib/format";
 import {
@@ -24,6 +25,8 @@ import {
 import { emptyProductForm, formToPayload, mapProductErrorPath, productFormSchema, productToForm, type ProductFormInput, type ProductFormOutput } from "./catalog-product-schema";
 import { OptionsAndVariants, syncSuggestedSkus } from "./catalog-product-variants";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+
+type AiProductDraft = { name: string; productType: string; shortDescription: string; description: string; seoTitle: string; seoDescription: string; seoKeywords: string; tags: string[]; generatedImageBase64: string; generatedImageMimeType: string; generatedImageBytes: number };
 
 const STATUS_HELP: Record<ProductStatus, string> = {
   DRAFT: "Hidden from the storefront while you work on it.",
@@ -44,6 +47,9 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
   const [initial] = useState(() => (product ? productToForm(product) : { values: emptyProductForm(), exclusions: [], retired: [] }));
   const [exclusions, setExclusions] = useState(initial.exclusions);
   const [retired, setRetired] = useState(initial.retired);
+  const [garmentFile, setGarmentFile] = useState<File | null>(null);
+  const [aiDraft, setAiDraft] = useState<AiProductDraft | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const form = useForm<ProductFormInput, unknown, ProductFormOutput>({ resolver: zodResolver(productFormSchema), defaultValues: initial.values });
   const {
@@ -73,6 +79,20 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
       const body = formToPayload(values);
       try {
         const saved = product ? await api.put<AdminProduct>(`/products/${product.id}`, body) : await api.post<AdminProduct>("/products", body);
+        if (aiDraft) {
+          try {
+            const imageResponse = await fetch(`data:${aiDraft.generatedImageMimeType};base64,${aiDraft.generatedImageBase64}`);
+            const imageBlob = await imageResponse.blob();
+            const modelPhoto = new File([imageBlob], "trendz-ai-model.jpg", { type: aiDraft.generatedImageMimeType });
+            await uploadProductImage(saved.id, modelPhoto, { altText: aiDraft.name });
+            setAiDraft(null);
+          } catch {
+            void qc.invalidateQueries({ queryKey: catalogKeys.products });
+            toast("Product was saved, but the model photo upload failed. Open the product and retry the image upload.", "error");
+            if (!product) router.replace(`/admin/products/${saved.id}`);
+            return;
+          }
+        }
         qc.setQueryData(catalogKeys.product(saved.id), saved);
         void qc.invalidateQueries({ queryKey: catalogKeys.products });
         void qc.invalidateQueries({ queryKey: catalogKeys.categories });
@@ -84,7 +104,7 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           void qc.invalidateQueries({ queryKey: catalogKeys.productCodes(saved.id) });
           toast("Product saved");
         } else {
-          toast("Product created. Add images and codes next.");
+          toast(aiDraft ? "Product created with the AI model photo. Review stock, pricing and variants before publishing." : "Product created. Add images and codes next.");
           router.replace(`/admin/products/${saved.id}`);
         }
       } catch (err) {
@@ -97,10 +117,68 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
     () => toast("Some fields need attention", "error"),
   );
 
+  async function generateAiDraft() {
+    if (!garmentFile) {
+      toast("Choose a garment photo first", "error");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const draft = await api.postImage<AiProductDraft>("/ai/product-draft", garmentFile);
+      setAiDraft(draft);
+      form.setValue("name", draft.name, { shouldDirty: true });
+      form.setValue("productType", draft.productType, { shouldDirty: true });
+      form.setValue("shortDescription", draft.shortDescription, { shouldDirty: true });
+      form.setValue("description", draft.description, { shouldDirty: true });
+      form.setValue("seoTitle", draft.seoTitle, { shouldDirty: true });
+      form.setValue("seoDescription", draft.seoDescription, { shouldDirty: true });
+      form.setValue("seoKeywords", draft.seoKeywords, { shouldDirty: true });
+      form.setValue("tags", draft.tags.join(", "), { shouldDirty: true });
+      toast("AI model photo and SEO details are ready. Review the details before saving.");
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   const taxOptions = taxClasses.data ?? [];
 
   return (
     <form onSubmit={onSubmit} noValidate>
+      {canWrite && !product && (
+        <Card title="AI model photo & SEO">
+          <div className="space-y-3">
+            <p className="text-sm text-ink/60">Upload the original garment photo. AI will create a model photo and fill in product and SEO text for you to review.</p>
+            <Field label="Garment photo" htmlFor="ai-garment-photo">
+              <Input
+                id="ai-garment-photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                onChange={(event) => {
+                  setGarmentFile(event.target.files?.[0] ?? null);
+                  setAiDraft(null);
+                }}
+              />
+            </Field>
+            {garmentFile && <p className="text-xs text-ink/60">{garmentFile.name} · {(garmentFile.size / 1024 / 1024).toFixed(2)} MB</p>}
+            <Button type="button" onClick={generateAiDraft} loading={generating} disabled={!garmentFile || generating}>
+              Generate model photo & SEO
+            </Button>
+            {aiDraft && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Generated model photo preview</p>
+                <img
+                  src={`data:${aiDraft.generatedImageMimeType};base64,${aiDraft.generatedImageBase64}`}
+                  alt="AI-generated model wearing the uploaded garment"
+                  className="max-h-96 rounded-lg object-contain"
+                />
+                <p className="text-xs text-ink/60">Image size: {(aiDraft.generatedImageBytes / 1024 / 1024).toFixed(2)} MB. Review all generated details before saving.</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
       <fieldset disabled={!canWrite} className="min-w-0 space-y-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0 space-y-6">
