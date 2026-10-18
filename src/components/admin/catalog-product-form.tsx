@@ -86,9 +86,13 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
             const modelPhoto = new File([imageBlob], "trendz-ai-model.jpg", { type: aiDraft.generatedImageMimeType });
             await uploadProductImage(saved.id, modelPhoto, { altText: aiDraft.name });
             setAiDraft(null);
-          } catch {
+          } catch (uploadError) {
+            // The product already exists at this point. Preserve it, refresh the catalog,
+            // and surface the actual upload failure so storage/auth errors are diagnosable.
             void qc.invalidateQueries({ queryKey: catalogKeys.products });
-            toast("Product was saved, but the model photo upload failed. Open the product and retry the image upload.", "error");
+            void qc.invalidateQueries({ queryKey: catalogKeys.product(saved.id) });
+            const reason = errorMessage(uploadError);
+            toast(`Product was saved, but the AI model photo could not be attached: ${reason}. Open the product's Images section and retry.`, "error");
             if (!product) router.replace(`/admin/products/${saved.id}`);
             return;
           }
