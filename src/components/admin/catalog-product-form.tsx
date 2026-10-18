@@ -93,7 +93,13 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
             return;
           }
         }
-        qc.setQueryData(catalogKeys.product(saved.id), saved);
+        // The product-create response predates the separate image upload and still has images: [].
+        // Do not seed the detail cache with that stale response after the image has been completed.
+        if (aiDraft) {
+          await qc.invalidateQueries({ queryKey: catalogKeys.product(saved.id) });
+        } else {
+          qc.setQueryData(catalogKeys.product(saved.id), saved);
+        }
         void qc.invalidateQueries({ queryKey: catalogKeys.products });
         void qc.invalidateQueries({ queryKey: catalogKeys.categories });
         if (product) {
